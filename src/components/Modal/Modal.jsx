@@ -1,33 +1,35 @@
 import { Overlay, ModalWindow } from './Modal.styled';
 import { createPortal } from 'react-dom';
-import { Component } from 'react';
+import { useEffect } from 'react';
 import PropTypes from 'prop-types';
 
 const modalRoot = document.querySelector('#modal-root');
 
-export class Modal extends Component {
-  componentDidMount() {
-    window.addEventListener('keydown', e => {
-      if (e.code === 'Escape') {
-        this.props.onCloseModal();
-      }
-    });
-  }
+export const Modal = ({ onCloseModal, children }) => {
+  useEffect(() => {
+    window.addEventListener('keydown', escClose);
+  });
 
-  closeModal = e => {
-    if (e.target.nodeName === 'DIV') {
-      this.props.onCloseModal();
+  const escClose = e => {
+    if (e.code === 'Escape') {
+      onCloseModal();
+      window.removeEventListener('keydown', escClose);
     }
   };
-  render() {
-    return createPortal(
-      <Overlay onClick={this.closeModal}>
-        <ModalWindow>{this.props.children}</ModalWindow>
-      </Overlay>,
-      modalRoot
-    );
-  }
-}
+
+  const closeModal = e => {
+    if (e.target.nodeName === 'DIV') {
+      onCloseModal();
+    }
+  };
+
+  return createPortal(
+    <Overlay onClick={closeModal}>
+      <ModalWindow>{children}</ModalWindow>
+    </Overlay>,
+    modalRoot
+  );
+};
 
 Modal.protoTypes = {
   onCloseModal: PropTypes.func,

@@ -1,68 +1,57 @@
 import { Button } from 'components/Button/Button';
 import { Loader } from 'components/Loader/Loader';
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { fetchPhotos } from 'services/ImagesAPI';
 import { Gallery } from './ImageGallery.styled';
 import { ImageGalleryItem } from './ImageGalleryItem/ImageGalleryItem';
 import { Notify } from 'notiflix';
 import PropTypes from 'prop-types';
 
-export class ImageGallery extends Component {
-  state = {
-    images: null,
-    page: 2,
-    isLoading: false,
-  };
+export const ImageGallery = ({ searchQuery }) => {
+  const [images, setImages] = useState(null);
+  const [page, setPage] = useState(2);
+  const [isLoading, setIsLoading] = useState(false);
 
-  componentDidUpdate(prevProps, _) {
-    if (
-      prevProps.searchQuery !== this.props.searchQuery &&
-      this.props.searchQuery !== ''
-    ) {
-      this.setState({ isLoading: true });
-      fetchPhotos(this.props.searchQuery).then(response => {
-        if (response.hits.length === 0) {
-          Notify.failure('Wrong request');
-          this.setState({ isLoading: false });
-        } else {
-          this.setState({ images: [...response.hits], isLoading: false });
-        }
-      });
+  useEffect(() => {
+    if (searchQuery === '') {
+      return;
     }
-  }
+    setIsLoading(true);
+    fetchPhotos(searchQuery).then(res => {
+      if (res.hits.length === 0) {
+        Notify.failure('Wrong request');
+        setIsLoading(false);
+      } else {
+        setImages(res.hits);
+        setIsLoading(false);
+      }
+    });
+  }, [searchQuery]);
 
-  loadMore = () => {
-    this.setState(prevState => ({
-      page: prevState.page + 1,
-    }));
+  const loadMore = () => {
+    setPage(prevPage => prevPage + 1);
+    setIsLoading(true);
 
-    this.setState({ isLoading: true });
-
-    fetchPhotos(this.props.searchQuery, this.state.page).then(response =>
-      this.setState(prevState => ({
-        images: [...prevState.images, ...response.hits],
-        isLoading: false,
-      }))
-    );
+    fetchPhotos(searchQuery, page).then(response => {
+      setImages(prevImages => [...prevImages, ...response.hits]);
+      setIsLoading(false);
+    });
   };
 
-  render() {
-    const { images, isLoading } = this.state;
-    return (
-      <>
-        {isLoading && <Loader />}
-        {images && (
-          <Gallery>
-            {images.map(item => {
-              return <ImageGalleryItem key={item.id} item={item} />;
-            })}
-          </Gallery>
-        )}
-        {images && <Button children={'Load more'} onClick={this.loadMore} />}
-      </>
-    );
-  }
-}
+  return (
+    <>
+      {isLoading && <Loader />}
+      {images && (
+        <Gallery>
+          {images.map(item => {
+            return <ImageGalleryItem key={item.id} item={item} />;
+          })}
+        </Gallery>
+      )}
+      {images && <Button children={'Load more'} onClick={loadMore} />}
+    </>
+  );
+};
 
 ImageGallery.propTypes = {
   searchQuery: PropTypes.string,
