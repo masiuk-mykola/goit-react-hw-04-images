@@ -9,7 +9,7 @@ import PropTypes from 'prop-types';
 
 export const ImageGallery = ({ searchQuery }) => {
   const [images, setImages] = useState(null);
-  const [page, setPage] = useState(2);
+  const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -17,25 +17,21 @@ export const ImageGallery = ({ searchQuery }) => {
       return;
     }
     setIsLoading(true);
-    fetchPhotos(searchQuery).then(res => {
+    fetchPhotos(searchQuery, page).then(res => {
       if (res.hits.length === 0) {
         Notify.failure('Wrong request');
         setIsLoading(false);
       } else {
-        setImages(res.hits);
+        page > 1
+          ? setImages(prevImages => [...prevImages, ...res.hits])
+          : setImages(res.hits);
         setIsLoading(false);
       }
     });
-  }, [searchQuery]);
+  }, [page, searchQuery]);
 
   const loadMore = () => {
     setPage(prevPage => prevPage + 1);
-    setIsLoading(true);
-
-    fetchPhotos(searchQuery, page).then(response => {
-      setImages(prevImages => [...prevImages, ...response.hits]);
-      setIsLoading(false);
-    });
   };
 
   return (
