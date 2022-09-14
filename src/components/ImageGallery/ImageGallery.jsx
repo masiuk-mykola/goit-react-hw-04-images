@@ -30,6 +30,10 @@ export const ImageGallery = ({ searchQuery }) => {
     });
   }, [page, searchQuery]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery]);
+
   const loadMore = () => {
     setPage(prevPage => prevPage + 1);
   };
